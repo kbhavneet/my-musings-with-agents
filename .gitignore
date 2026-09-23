@@ -1,0 +1,12 @@
+# Virtual environment
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Gradio
+.gradio/
+
+# Environment variables / secrets
+.env
