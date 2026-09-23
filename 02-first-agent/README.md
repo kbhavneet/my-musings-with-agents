@@ -18,6 +18,7 @@ The agent can be started locally with:
 
 ```bash
 python app.py
+```
 
 ## Testing the Tools
 
