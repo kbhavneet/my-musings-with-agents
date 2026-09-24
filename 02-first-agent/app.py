@@ -1,4 +1,5 @@
-from smolagents import CodeAgent,DuckDuckGoSearchTool, HfApiModel,load_tool,tool
+# from smolagents import CodeAgent,DuckDuckGoSearchTool, HfApiModel,load_tool,tool
+from smolagents import CodeAgent, HfApiModel, load_tool, tool
 import datetime
 import requests
 import pytz
@@ -22,11 +23,28 @@ def get_current_time_in_timezone(timezone: str) -> str:
     except Exception as e:
         return f"Error fetching time for timezone '{timezone}': {str(e)}"
 
+@tool
+def web_search(query: str) -> str:
+    """Searches the web using DuckDuckGo.
+
+    Args:
+        query: The search query to perform.
+    """
+    from ddgs import DDGS
+
+    results = list(DDGS().text(query, max_results=3))
+
+    if not results:
+        return "No search results found."
+
+    return "\n\n".join(
+        f"[{result['title']}]({result['href']})\n{result['body']}" for result in results
+    )
 
 final_answer = FinalAnswerTool()
 
 # If the agent does not answer, the model is overloaded, please use another model or the following Hugging Face Endpoint that also contains qwen2.5 coder:
-# model_id='https://pflgm2locj2t89co.us-east-1.aws.endpoints.huggingface.cloud' 
+# model_id='https://pflgm2locj2t89co.us-east-1.aws.endpoints.huggingface.cloud'
 
 model = HfApiModel(
 max_tokens=2096,
@@ -39,22 +57,26 @@ custom_role_conversions=None,
 # Import tool from Hub
 image_generation_tool = load_tool("agents-course/text-to-image", trust_remote_code=True)
 
+# web_search = DuckDuckGoSearchTool()
+
 with open("prompts.yaml", 'r') as stream:
     prompt_templates = yaml.safe_load(stream)
-    
+
 agent = CodeAgent(
     model=model,
     tools=[
-    get_current_time_in_timezone,
-    image_generation_tool,
-    final_answer],
+        get_current_time_in_timezone,
+        image_generation_tool,
+        web_search,
+        final_answer,
+    ],
     max_steps=6,
     verbosity_level=1,
     grammar=None,
     planning_interval=None,
     name=None,
     description=None,
-    prompt_templates=prompt_templates
+    prompt_templates=prompt_templates,
 )
 
 
